@@ -106,4 +106,8 @@ public class Customer {
         }
         return false;
     }
+
+    public void deleteAllAccounts() {
+        accounts.clear();
+    }
 }

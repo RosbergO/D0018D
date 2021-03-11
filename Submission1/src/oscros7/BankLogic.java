@@ -1,5 +1,5 @@
 /**
- * Contains all the bank logic, e.g. lets a user deposit, withdraw, create accounts, delete accounts, and so on
+ *
  * @author  Oscar Rosberg, oscros-7
  */
 
@@ -27,11 +27,11 @@ public class BankLogic {
      * @param firstName first name of the customer
      * @param lastName last name of the customer
      * @param ssn social security number of the customer
-     * @return true if successfull, else false
+     * @return true if successful, else false
      */
     public boolean createCustomer(String firstName, String lastName, String ssn) {
         for(Customer customer : customers) {
-            if(customer.getSsn() == ssn) {
+            if(customer.getSsn().equals(ssn)) {
                 return false;
             }
         }
@@ -47,14 +47,13 @@ public class BankLogic {
      */
     public ArrayList<String> getCustomer(String ssn) {
         ArrayList<String> specificCustomer = new ArrayList<>();
-        for(Customer customer : customers) {
-            if(customer.getSsn().equals(ssn)) {
-                specificCustomer.add(customer.getCustomerInfo());
-                for(Account account : customer.getAccounts()) {
-                    specificCustomer.add(account.getAccountInfo());
-                }
-                return specificCustomer;
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null) {
+            specificCustomer.add(customer.getCustomerInfo());
+            for(Account account : customer.getAccounts()) {
+                specificCustomer.add(account.getAccountInfo());
             }
+            return specificCustomer;
         }
         return null;
     }
@@ -67,19 +66,18 @@ public class BankLogic {
      * @return true if name changed was successful, else false
      */
     public boolean changeCustomerName(String firstName, String lastName, String ssn) {
-        for(Customer customer : customers) {
-            if(customer.getSsn().equals(ssn)) {
-                if(firstName.isBlank() && lastName.isBlank()) {
-                    return false;
-                }
-                else if(firstName.isBlank()) {
-                    customer.setLastName(lastName);
-                }
-                else if(lastName.isBlank()) {
-                    customer.setFirstName(firstName);
-                }
-                return true;
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null) {
+            if(firstName.isBlank() && lastName.isBlank()) {
+                return false;
             }
+            if(!firstName.isBlank()) {
+                customer.setFirstName(firstName);
+            }
+            if(!lastName.isBlank()) {
+                customer.setLastName(lastName);
+            }
+            return true;
         }
         return false;
     }
@@ -90,12 +88,11 @@ public class BankLogic {
      * @return the new account number if successful, else -1
      */
     public int createSavingsAccount(String ssn) {
-        for(Customer customer : customers) {
-            if(customer.getSsn().equals(ssn)) {
-                Account account = new Account(0, 1, AccountType.sparkonto);
-                customer.addAccount(account);
-                return account.getAccountNumber();
-            }
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null) {
+            Account account = new Account(0, 1, AccountType.sparkonto);
+            customer.addAccount(account);
+            return account.getAccountNumber();
         }
         return -1;
     }
@@ -108,13 +105,17 @@ public class BankLogic {
      * the account number, balance, account type and interest rate (%) as a string
      */
     public String getAccount(String ssn, int accountId) {
+        Account account = getAccountInfo(ssn, accountId);
+        if(account != null) {
+            return account.getAccountInfo();
+        }
+        return null;
+    }
+
+    public Customer getSpecificCustomer(String ssn) {
         for(Customer customer : customers) {
             if(customer.getSsn().equals(ssn)) {
-                for(Account account : customer.getAccounts()) {
-                    if(account.getAccountNumber() == accountId) {
-                        return account.getAccountInfo();
-                    }
-                }
+                return customer;
             }
         }
         return null;
@@ -127,12 +128,11 @@ public class BankLogic {
      * @return the account object or null
      */
     public Account getAccountInfo(String ssn, int accountId) {
-        for(Customer customer : customers) {
-            if (customer.getSsn().equals(ssn)) {
-                for (Account account : customer.getAccounts()) {
-                    if (account.getAccountNumber() == accountId) {
-                        return account;
-                    }
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null) {
+            for (Account account : customer.getAccounts()) {
+                if (account.getAccountNumber() == accountId) {
+                    return account;
                 }
             }
         }
@@ -180,12 +180,11 @@ public class BankLogic {
      */
     public String closeAccount(String ssn, int accountId) {
         Account account = getAccountInfo(ssn, accountId);
-        for(Customer customer : customers) {
-            if(customer.getSsn().equals(ssn) && account != null) {
-                String accountInfo = account.getClosingAccountInfo();
-                customer.deleteAccount(accountId);
-                return accountInfo;
-            }
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null && account != null) {
+            String accountInfo = account.getClosingAccountInfo();
+            customer.deleteAccount(accountId);
+            return accountInfo;
         }
         return null;
     }
@@ -197,17 +196,18 @@ public class BankLogic {
      */
     public ArrayList<String> deleteCustomer(String ssn) {
         ArrayList<String> customerInfo = new ArrayList<>();
-        for(Customer customer : customers) {
-            if(customer.getSsn().equals(ssn)) {
-                customerInfo.add(customer.getCustomerInfo());
+        Customer customer = getSpecificCustomer(ssn);
+        if(customer != null) {
+            customerInfo.add(customer.getCustomerInfo());
+            if(customer.getAccounts() != null) {
                 for(Account account : customer.getAccounts()) {
-                    customerInfo.add(closeAccount(ssn, account.getAccountNumber()));
+                    customerInfo.add(account.getClosingAccountInfo());
                 }
             }
+            customer.deleteAllAccounts();
+            customers.remove(customer);
             return customerInfo;
         }
         return null;
     }
-
-
 }
