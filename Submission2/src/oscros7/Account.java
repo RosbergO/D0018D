@@ -5,24 +5,24 @@
 
 package oscros7;
 
+import java.util.ArrayList;
+
 public abstract class Account {
 
+    private ArrayList<Transaction> transactions = new ArrayList<>();
     private double balance;
     private int accountNumber;
     private static int lastAssignedAccountNumber = 1000;
-    private int interestRate;
-    private AccountType accountType;
+    private double interestRate;
 
     /**
      * Constructor to create an instance of the Account class
      * @param balance starting balance of the account
      * @param interestRate interest rate of the account
-     * @param accountType type of account (only "Sparkonto" available at the moment)
      */
-    public Account(double balance, int interestRate, AccountType accountType) {
+    public Account(double balance, double interestRate) {
         this.balance = balance;
         this.interestRate = interestRate;
-        this.accountType = accountType;
         accountNumber = ++lastAssignedAccountNumber;
     }
 
@@ -32,6 +32,10 @@ public abstract class Account {
      */
     public double getBalance() {
         return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 
     /**
@@ -55,33 +59,21 @@ public abstract class Account {
      * @return the interest rate of the account
      */
 
-    public int getInterestRate() {
+    public double getInterestRate() {
         return interestRate;
-    }
-
-    /**
-     *
-     * @return the account type
-     */
-    public AccountType getAccountType() {
-        return accountType;
     }
 
     /**
      *
      * @return the account number, balance, account type and interest rate (%) as a string
      */
-    public String getAccountInfo() {
-        return accountNumber + " " + balance + " " + accountType + " " + interestRate + "%";
-    }
+    public abstract String getAccountInfo();
 
     /**
      *
      * @return account number, balance, type of account and the interest as a string
      */
-    public String getClosingAccountInfo() {
-        return accountNumber + " " + balance + " " + accountType + " " + calculateInterest();
-    }
+    public abstract String getClosingAccountInfo();
 
     /**
      * Deposits an amount in to the selected account
@@ -90,6 +82,7 @@ public abstract class Account {
     public void deposit(double amount) {
         if(amount > 0) {
             this.balance += amount;
+            transactions.add(new Transaction(accountNumber, amount, balance));
         }
     }
 
@@ -98,27 +91,31 @@ public abstract class Account {
      * @param amount the amount to withdraw from the account
      * @return true if successfull, else returns false
      */
-    public boolean withdraw(double amount) {
-        if(balance >= amount && amount > 0) {
-            this.balance -= amount;
-            return true;
-        }
-        return false;
-    }
+    public abstract boolean withdraw(double amount);
 
     /**
      * Calculates the interest of the account
      * @return the interest
      */
-    public double calculateInterest() {
-        return balance * interestRate / 100;
+    public abstract double calculateInterest();
+
+
+    public ArrayList<Transaction> getTransactions() {
+        return transactions;
     }
 
-}
+    public ArrayList<String> getTransactionString() {
+        ArrayList<String> trans = new ArrayList<>();
+        for(Transaction transaction : transactions) {
+            String info = "";
+            info += transaction.getDateTime() + " ";
+            info += transaction.getAmount() + " ";
+            info += "Saldo: " + transaction.getBalance();
+            trans.add(info);
+        }
+        return trans;
+    }
 
-/**
- * Specifies the different type of accounts.
- */
-enum AccountType {
-    sparkonto;
+
+
 }
